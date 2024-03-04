@@ -1,9 +1,10 @@
 % 名為 HEFT 的 MATLAB 函式，有兩個輸入參數，filename_t 和 filename_a，分別代表了拓撲檔、應用程式檔的檔名
-function [rank,reward,priority_proposal,priority_PDAGTO,priority_DA,resultname,first,priority_n,priority_rank] = HEFT(filename_t,filename_a)
+function [rank,reward , priority_NewMethod ,priority_proposal,priority_PDAGTO,priority_DA,resultname,first,priority_n,priority_rank] = HEFT(filename_t,filename_a)
 
 global App dead reward cores topo rank W comm a n_a b n_b ft
 global priority_proposal priority_PDAGTO priority_DA priority_n priority_rank
 global ranktime Wtime K cut
+global priority_NewMethod
 
 % 使用 network1 和 application 函式初始化網路和應用程式的相關變數
 [cores,topo] = network1(filename_t) ;
@@ -25,11 +26,13 @@ resultname = s1 + "_" + s2 + "p.xls";
 % 初始化用於存放結果和一些權重參數
 rank = cell(1,n_a) ;
 ranktime = cell(1,n_a) ;
+
 priority_proposal = zeros(1,n_a) ;
 priority_PDAGTO = zeros(1,n_a) ;  %0905之前的版本需要註解此行
 priority_DA = zeros(1,n_a) ;
 priority_n = zeros(1,n_a) ;
 priority_rank = zeros(1,n_a);
+priority_NewMethod = zeros(1,n_a) ;
 
 dead_rank = zeros(n_a,2) ;
 
@@ -111,6 +114,9 @@ for i=1:n_a
     
     % MAR
     priority_proposal(1,i) = 0.2*(dead(1,i))+0.8*max(rank{i}(1,:)) ; %這是學姊方法(MAR)
+
+    % proposal NewMethod
+    priority_rank(1,i) = ( abs(alp*( dead(1,i) - max(rank{i}(1,:)))) + bet*(dead(1,i)) ) ;
 
 end
 

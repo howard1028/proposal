@@ -1,39 +1,60 @@
-%以任務完成率為目標，不同核心數量下的場景，伺服器數量為10，核心數量為1、2、4、6、8、10，應用程序數量為100
+%目標：任務完成率
+%伺服器數量：10
+%核心數量：1、2、4、6、8、10
+%應用程序數量：100
 
 %設定全域變數 App、dead、cores、topo、ft
 global App dead cores topo ft
 
-%str_n = "network_NSFNET_core1.txt"
-
 app_x = 100; %應用程序數量
 fprintf('%s %d\n','應用程序數量 = ',app_x);
-%x = [10:10:app_x]
 
-x = [1 2 4 6 8 10]; %伺服器和核心的數量
+x = [1 2 4 6 8 10]; %每個伺服器核心的數量
 fprintf('不同伺服器的核心的數量 = [%s]\n', num2str(x, ' %d'));
 
-%初始化結果矩陣
+%這些矩陣用於存儲實驗結果，每個矩陣的列數為6，對應於核心數量從1到10的情境
+%完工時間的結果矩陣
 y1_1 = zeros(1,6);
 y2_1 = zeros(1,6);
 y3_1 = zeros(1,6);
+
+%獎勵比率的結果矩陣
 y1_2 = zeros(1,6);
 y2_2 = zeros(1,6);
 y3_2 = zeros(1,6);
+
+%排程方法DTSMCS的結果矩陣
 y4_1 = zeros(1,6);
 y4_2 = zeros(1,6);
+
+%排程方法Daas的結果矩陣
 y5_1 = zeros(1,6);
 y5_2 = zeros(1,6);
 
+%prorosal排程方法NewMethod的結果矩陣
+y6_1 = zeros(1,6);
+y6_2 = zeros(1,6);
+
+
+%這些矩陣是用於存儲實驗結果的總和，將用於計算平均值
 y1_1a = zeros(1,6);
 y1_2a = zeros(1,6);
+
 y2_1a = zeros(1,6);
 y2_2a = zeros(1,6);
+
 y3_1a = zeros(1,6);
 y3_2a = zeros(1,6);
+
 y4_1a = zeros(1,6);
 y4_2a = zeros(1,6);
+
 y5_1a = zeros(1,6);
 y5_2a = zeros(1,6);
+
+%proposal
+y6_1a = zeros(1,6);
+y6_2a = zeros(1,6);
 
 cnt = 0;
 fprintf('次數 = %d\n',cnt);
@@ -47,7 +68,7 @@ for j=1:average_cnt
     fprintf('生成應用程序和執行排程...\n');
     LbyL_generate_DX(app_x) %生成應用程序和執行排程
     cnt = 0;
-    fprintf("cnt=%d",cnt)
+    fprintf("cnt=%d\n",cnt)
 
     for i=1:6
         % cc:核心數量
@@ -59,39 +80,40 @@ for j=1:average_cnt
 
         %網路拓樸，包含server、core
         str_n = "fullnetwork10_core" + cc + ".txt";
-        %
+        %應用程式
         str_a = "app_LbyL" + app_x + ".txt";
 
 
         %執行了 HEFT 演算法生成優先度，並將其用於 MAR、PDAGTO、DA、DTSMCS 和 Daas 等排程方法
         fprintf('HEFT(%s , %s)\n',str_n,str_a);
-        [rank,reward,priority_proposal,priority_PDAGTO,priority_DA,resultname,first,priority_n,priority_rank] = HEFT(str_n,str_a);
+        [rank,reward , priority_NewMethod , priority_proposal,priority_PDAGTO,priority_DA,resultname,first,priority_n,priority_rank] = HEFT(str_n,str_a);
 
         fprintf('schedule_MAR\n');
         [server_proposal,app_proposal,complete_proposal,reward_ratio_proposal] = schedule_MAR(priority_proposal,rank,App,topo,reward,first,1); %first之後用自動生成，這裡只是測試
-        %output_result(server_proposal,app_proposal,1,resultname)
 
         fprintf('schedule_PDAGTO_origin\n');
         [server_PDAGTO,app_PDAGTO,complete_PDAGTO,reward_ratio_PDAGTO] = schedule_PDAGTO_origin(priority_PDAGTO,App,topo,reward,first,1);
-        %output_result(server_PDAGTO,app_PDAGTO,2,resultname)
 
         fprintf('schedule\n');
         [server_DA,app_DA,complete_DA,reward_ratio_DA] = schedule(priority_DA,rank,App,topo,reward,first,1);
-        %output_result(server_DA,app_DA,3,resultname)
 
         fprintf('schedule_DX\n');
         [server_rank,app_rank,complete_rank,reward_ratio_rank] = schedule_DX(priority_rank,rank,App,topo,reward,first,1) ;
 
 
-        %有正規化的
-        %[server_n,app_n,complete_n,reward_ratio_n] = schedule(priority_n,rank,App,topo,reward,first,1)
-
         fprintf('Daas\n');
         [rank,reward,resultname,priority_Daas] = Daas(str_n,str_a); %進行比較實驗時不需要first
         fprintf('schedule_Daas\n');
         [server_Daas,app_Daas,complete_Daas,reward_ratio_Daas] = schedule_Daas(priority_Daas,App,topo,reward,first,1);
+
+
+        %proposal 排程方法 NewMethod
+        fprintf('schedule_NewMethod\n');
+        [server_NewMethod, app_NewMethod, complete_NewMethod, reward_ratio_NewMethod] = schedule_NewMethod(priority_NewMethod, rank, App, topo, reward, first, 1);
+
     
         cnt=cnt+1;
+
         %每次實驗結束後，將實驗結果存儲在相應的矩陣中
         y1_1(1,cnt) = complete_proposal;
         y2_1(1,cnt) = complete_PDAGTO;
@@ -115,17 +137,6 @@ for j=1:average_cnt
         y4_1a(1,cnt) = y4_1a(1,cnt)+complete_rank;
         y4_2a(1,cnt) = y4_2a(1,cnt)+reward_ratio_rank;
     end    
-
-%     str_c = "data_LbyL_reward_random_alpha0.2_beta0.8_complete_10to100_" + j ;
-%     str_r = "data_LbyL_reward_random_alpha0.2_beta0.8_reward_10to100_" + j ;
-%     figure(1)
-%     plot(x,y1_1,x,y2_1,x,y3_1,x,y4_1,x,y5_1)
-%     legend('proposal','PDAGTO','DA','STF','Daas');
-%     %saveas(gcf,str_c,'png')
-%     figure(2)
-%     plot(x,y1_2,x,y2_2,x,y3_2,x,y4_2,x,y5_2)
-%     legend('proposal','PDAGTO','DA','STF','Daas');
-%     %saveas(gcf,str_r,'png')
 end
 
 %計算平均結果
@@ -144,14 +155,9 @@ end
 
 %繪製圖表
 figure(5)
-    plot(x,y1_1a,x,y2_1a,x,y3_1a,x,y4_1a,x,y5_1a)
-    legend('MAR','PDAGTO','EDF','DTSMCS','Daas');
+    plot(x,y1_1a , x,y2_1a , x,y3_1a , x,y4_1a , x,y5_1a , x,y6_1a)
+    legend('MAR','PDAGTO','EDF','DTSMCS','Daas','NewMethod');
 
-    %saveas(gcf,'data_LbyL_reward_random_alpha0.2_beta0.8_complete_10to100_a','png')
-% figure(6)
-%     plot(x,y1_2a,x,y2_2a,x,y3_2a,x,y4_2a,x,y5_2a)
-%     legend('MAR','PDAGTO','EDF','DTSMCS','Daas');
-%     %saveas(gcf,'data_LbyL_reward_random_alpha0.2_beta0.8_reward_10to100_a','png')
 
 %保存結果到文件
 fid = fopen('core1_complete.txt','wt');
@@ -167,18 +173,3 @@ for i=1:6
 end
 
 fclose(fid);
-
-
-% fid = fopen('core1_reward.txt','wt');
-% fprintf(fid,' MAR PDAGTO EDF DTSMCS Daas\n');
-% 
-% for i=1:6
-%     if i == 1
-%         cc = 1 ;
-%     elseif i > 1
-%         cc = 2*(i-1) ;
-%     end    
-%     fprintf(fid,'%d %d %d %d %d %d\n',i,y1_2a(1,i)*100,y2_2a(1,i)*100,y3_2a(1,i)*100,y4_2a(1,i)*100,y5_2a(1,i)*100);
-% end
-% 
-% fclose(fid);

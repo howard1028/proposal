@@ -1,6 +1,4 @@
 function [] = LbyL_generate_DX(app_x)
-%UNTITLED6 Summary of this function goes here
-%   Detailed explanation goes here
 
 global K cut;
 K = cell(1,app_x/10) ;
