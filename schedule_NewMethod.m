@@ -1,4 +1,4 @@
-function [server_sch,app_sch,complete,reward_ratio] = schedule_DX(priority,rank,App,topo,reward,first,parti)
+function [server_sch,app_sch,complete,reward_ratio] = schedule_NewMethod(priority,rank,App,topo,reward,first,parti)
 %UNTITLED13 Summary of this function goes here
 %   Detailed explanation goes here
 

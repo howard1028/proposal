@@ -57,9 +57,9 @@ y6_1a = zeros(1,6);
 y6_2a = zeros(1,6);
 
 cnt = 0;
-fprintf('次數 = %d\n',cnt);
+fprintf('紀錄的次數 = %d\n',cnt);
 
-average_cnt = 10; %實驗的平均次數
+average_cnt = 1; %實驗的平均次數
 fprintf('實驗的平均次數 = %d\n',average_cnt);
 
 %外迴圈控制實驗的平均次數，內迴圈則執行各個不同情境的實驗
@@ -87,6 +87,12 @@ for j=1:average_cnt
         %執行了 HEFT 演算法生成優先度，並將其用於 MAR、PDAGTO、DA、DTSMCS 和 Daas 等排程方法
         fprintf('HEFT(%s , %s)\n',str_n,str_a);
         [rank,reward , priority_NewMethod , priority_proposal,priority_PDAGTO,priority_DA,resultname,first,priority_n,priority_rank] = HEFT(str_n,str_a);
+        
+        disp('Priority_NewMethod:');
+        disp(priority_NewMethod);
+        disp('Priority_Rank:');
+        disp(priority_rank);
+
 
         fprintf('schedule_MAR\n');
         [server_proposal,app_proposal,complete_proposal,reward_ratio_proposal] = schedule_MAR(priority_proposal,rank,App,topo,reward,first,1); %first之後用自動生成，這裡只是測試
@@ -100,6 +106,9 @@ for j=1:average_cnt
         fprintf('schedule_DX\n');
         [server_rank,app_rank,complete_rank,reward_ratio_rank] = schedule_DX(priority_rank,rank,App,topo,reward,first,1) ;
 
+        %proposal 排程方法 NewMethod
+        fprintf('schedule_NewMethod\n');
+        [server_NewMethod, app_NewMethod, complete_NewMethod, reward_ratio_NewMethod] = schedule_NewMethod(priority_NewMethod, rank, App, topo, reward, first, 1);
 
         fprintf('Daas\n');
         [rank,reward,resultname,priority_Daas] = Daas(str_n,str_a); %進行比較實驗時不需要first
@@ -107,9 +116,6 @@ for j=1:average_cnt
         [server_Daas,app_Daas,complete_Daas,reward_ratio_Daas] = schedule_Daas(priority_Daas,App,topo,reward,first,1);
 
 
-        %proposal 排程方法 NewMethod
-        fprintf('schedule_NewMethod\n');
-        [server_NewMethod, app_NewMethod, complete_NewMethod, reward_ratio_NewMethod] = schedule_NewMethod(priority_NewMethod, rank, App, topo, reward, first, 1);
 
     
         cnt=cnt+1;
@@ -123,6 +129,7 @@ for j=1:average_cnt
         y3_2(1,cnt) = reward_ratio_DA;
         y5_1(1,cnt) = complete_Daas;
         y5_2(1,cnt) = reward_ratio_Daas;
+
         y4_1(1,cnt) = complete_rank;
         y4_2(1,cnt) = reward_ratio_rank;
 
@@ -134,8 +141,16 @@ for j=1:average_cnt
         y3_2a(1,cnt) = y3_2a(1,cnt)+reward_ratio_DA;
         y5_1a(1,cnt) = y5_1a(1,cnt)+complete_Daas;
         y5_2a(1,cnt) = y5_2a(1,cnt)+reward_ratio_Daas;
+
         y4_1a(1,cnt) = y4_1a(1,cnt)+complete_rank;
         y4_2a(1,cnt) = y4_2a(1,cnt)+reward_ratio_rank;
+
+        %proposal
+        y6_1(1,cnt) = complete_NewMethod;
+        y6_2(1,cnt) = reward_ratio_NewMethod;
+        y6_1a(1,cnt) = y6_1a(1,cnt) + complete_NewMethod;
+        y6_2a(1,cnt) = y6_2a(1,cnt) + reward_ratio_NewMethod;
+
     end    
 end
 
@@ -151,6 +166,9 @@ for j=1:6
         y5_2a(1,j) = y5_2a(1,j)/average_cnt;
         y4_1a(1,j) = y4_1a(1,j)/average_cnt;
         y4_2a(1,j) = y4_2a(1,j)/average_cnt;
+
+        y6_1a(1,j) = y6_1a(1,j)/average_cnt;
+        y6_2a(1,j) = y6_2a(1,j)/average_cnt;        
 end    
 
 %繪製圖表
@@ -159,9 +177,9 @@ figure(5)
     legend('MAR','PDAGTO','EDF','DTSMCS','Daas','NewMethod');
 
 
-%保存結果到文件
+%保存結果到文件(還沒改by wu)
 fid = fopen('core1_complete.txt','wt');
-fprintf(fid,' MAR PDAGTO EDF DTSMCS Daas\n');
+fprintf(fid,' MAR PDAGTO EDF DTSMCS Daas NewMethod\n');
 
 for i=1:6
     if i == 1
@@ -169,7 +187,7 @@ for i=1:6
     elseif i > 1
         cc = 2*(i-1) ;
     end
-    fprintf(fid,'%d %d %d %d %d %d\n',cc,y1_1a(1,i)*100,y2_1a(1,i)*100,y3_1a(1,i)*100,y4_1a(1,i)*100,y5_1a(1,i)*100);
+    fprintf(fid,'%d %d %d %d %d %d %d\n',cc,y1_1a(1,i)*100,y2_1a(1,i)*100,y3_1a(1,i)*100,y4_1a(1,i)*100,y5_1a(1,i)*100 , y6_1a(1,i)*100);
 end
 
 fclose(fid);

@@ -4,6 +4,7 @@ function [rank,reward , priority_NewMethod ,priority_proposal,priority_PDAGTO,pr
 global App dead reward cores topo rank W comm a n_a b n_b ft
 global priority_proposal priority_PDAGTO priority_DA priority_n priority_rank
 global ranktime Wtime K cut
+
 global priority_NewMethod
 
 % 使用 network1 和 application 函式初始化網路和應用程式的相關變數
@@ -116,7 +117,7 @@ for i=1:n_a
     priority_proposal(1,i) = 0.2*(dead(1,i))+0.8*max(rank{i}(1,:)) ; %這是學姊方法(MAR)
 
     % proposal NewMethod
-    priority_rank(1,i) = ( abs(alp*( dead(1,i) - max(rank{i}(1,:)))) + bet*(dead(1,i)) ) ;
+    priority_NewMethod(1,i) = ( abs(alp*( dead(1,i) - max(rank{i}(1,:)))) + bet*(dead(1,i)) ) ;
 
 end
 
